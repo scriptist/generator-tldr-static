@@ -1,5 +1,5 @@
 {
-  "name": "theholytest.com",
+  "name": "<%= appname %>",
   "dependencies": {
   }
 }
