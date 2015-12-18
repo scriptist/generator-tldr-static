@@ -1,0 +1,25 @@
+{
+  "name": "generator-tldr-static",
+  "version": "0.0.1",
+  "description": "Nunjucks, Gulp, SCSS, and Babel (ES6)",
+  "homepage": "https://github.com/scriptist/generator-tldr-static",
+  "author": {
+    "name": "Michael Berman",
+    "email": "me@scripti.st",
+    "url": "http://scripti.st"
+  },
+  "files": [
+    "generators"
+  ],
+  "main": "generators\\index.js",
+  "keywords": [
+    "yeoman-generator"
+  ],
+  "dependencies": {
+    "yeoman-generator": "^0.21.1",
+    "chalk": "^1.0.0",
+    "yosay": "^1.0.2"
+  },
+  "repository": "git@github.com:scriptist/generator-slim-twig-scss-babel.git",
+  "license": "Apache-2.0"
+}
