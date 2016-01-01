@@ -125,7 +125,7 @@ gulp.task('buildhtml', ['nunjucks'], function() {
 		.pipe(gulp.dest('dist'));
 });
 
-gulp.task('buildimages', ['nunjucks'], function() {
+gulp.task('buildimages', function() {
 	return gulp
 		.src('app/image/**/*')
 		.pipe(gulp.dest('dist/image'));
