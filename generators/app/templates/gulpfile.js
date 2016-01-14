@@ -41,6 +41,7 @@ gulp.task('es6', ['lintes6', 'cleanjs'], function() {
 	b.transform('babelify', {extensions: ['.es6']});
 
 	return b.bundle()
+		.on('error', onError)
 		.pipe($.plumber({
 			errorHandler: onError
 		}))
