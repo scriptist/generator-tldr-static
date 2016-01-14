@@ -11,6 +11,7 @@ var buffer = require('vinyl-buffer');
 var onError = function (err) {
 	$.util.beep();
 	$.util.log($.util.colors.red('Compilation Error\n'), err.toString());
+	this.emit('end');
 };
 
 gulp.task('scss', ['cleancss'], function() {
@@ -40,10 +41,6 @@ gulp.task('es6', ['lintes6', 'cleanjs'], function() {
 	b.transform('babelify', {extensions: ['.es6']});
 
 	return b.bundle()
-		.on('error', function (err) {
-			onError(err);
-			this.emit("end");
-		})
 		.pipe($.plumber({
 			errorHandler: onError
 		}))
