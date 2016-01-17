@@ -4,7 +4,6 @@
   "description": "",
   "author": "me@scripti.st",
   "devDependencies": {
-    "aliasify": "^1.8.0",
     "babel-eslint": "^4.1.6",
     "babel-preset-es2015": "^6.1.18",
     "babelify": "^7.2.0",
