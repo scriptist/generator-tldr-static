@@ -1,6 +1,6 @@
 {
   "name": "generator-tldr-static",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Nunjucks, Gulp, SCSS, and Babel (ES6)",
   "homepage": "https://github.com/scriptist/generator-tldr-static",
   "author": {

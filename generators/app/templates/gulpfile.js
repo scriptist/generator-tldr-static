@@ -3,7 +3,6 @@ var autoprefixer = require('gulp-autoprefixer');
 var $ = require('gulp-load-plugins')();
 var browserify = require('browserify');
 var babelify = require('babelify');
-var aliasify = require('aliasify');
 var browserSync = require('browser-sync');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
