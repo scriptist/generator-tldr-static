@@ -20,6 +20,6 @@
     "chalk": "^1.0.0",
     "yosay": "^1.0.2"
   },
-  "repository": "git@github.com:scriptist/generator-slim-twig-scss-babel.git",
+  "repository": "git@github.com:scriptist/generator-tldr-static.git",
   "license": "Apache-2.0"
 }
