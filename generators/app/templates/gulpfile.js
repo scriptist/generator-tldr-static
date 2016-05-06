@@ -1,154 +1,164 @@
-var gulp = require('gulp');
-var autoprefixer = require('gulp-autoprefixer');
-var $ = require('gulp-load-plugins')();
-var browserify = require('browserify');
-var babelify = require('babelify');
-var browserSync = require('browser-sync');
-var source = require('vinyl-source-stream');
-var buffer = require('vinyl-buffer');
+/* eslint-disable no-console */
+const watchify = require('watchify');
+const browserify = require('browserify');
+const gulp = require('gulp');
+const source = require('vinyl-source-stream');
+const buffer = require('vinyl-buffer');
+const browserSync = require('browser-sync');
+const del = require('del');
+const $ = require('gulp-load-plugins')();
 
-var onError = function (err) {
+
+function onError(err) {
 	$.util.beep();
 	$.util.log($.util.colors.red('Compilation Error\n'), err.toString());
 	this.emit('end');
-};
+}
 
-gulp.task('scss', ['cleancss'], function() {
-	return gulp
-		.src('app/scss/**/*.scss')
+/**
+ * This task removes all files inside the 'dist' directory.
+ */
+gulp.task('clean', () =>
+	del.sync('./dist/**/*')
+);
+
+/**
+ * Media
+ */
+gulp.task('buildmedia', () =>
+	gulp.src(['./src/media/**'])
+		.pipe($.plumber())
+		.pipe(gulp.dest('./dist/media'))
+);
+
+/**
+ * Layouts
+ */
+gulp.task('cleanhtml', del.bind(null, ['tmp/**/*.html']));
+
+gulp.task('html', ['cleanhtml'], () =>
+	gulp.src('./src/nunjucks/**/[^_]*.html.nunjucks')
 		.pipe($.plumber({
-			errorHandler: onError
+			errorHandler: onError,
 		}))
-		.pipe($.sourcemaps.init())
-			.pipe($.sass({
-				outputStyle: 'compressed',
-				onError: console.error.bind(console, 'Sass error:')
-			}))
-			.pipe(autoprefixer())
-		.pipe($.sourcemaps.write(''))
-		.pipe(gulp.dest('tmp/css'))
-		.pipe(browserSync.stream());
-});
+		.pipe($.nunjucksHtml({
+			searchPaths: ['./src/nunjucks'],
+		}))
+		.pipe($.rename({
+			extname: '',
+		}))
+		.pipe(gulp.dest('tmp'))
+		.pipe(browserSync.stream())
+);
 
-gulp.task('es6', ['lintes6', 'cleanjs'], function() {
-	var b = browserify({
-		baseDir: 'app/es6',
-		entries: ['app/es6/global.es6'],
-		paths: ['app/es6', 'bower_components'],
-		transform: []
-	});
-	b.transform('babelify', {extensions: ['.es6']});
+gulp.task('buildhtml', ['html'], () =>
+	gulp
+		.src('./tmp/**/*.html')
+		.pipe($.htmlmin({ collapseWhitespace: true }))
+		.pipe(gulp.dest('dist'))
+);
+
+/**
+ * Scripts
+ */
+gulp.task('cleanjs', del.bind(null, ['./tmp/js/**/*']));
+
+function bundleJs(watch) {
+	const customOpts = {
+		entries: ['./src/es6/app.es6'],
+		transform: ['babelify'],
+		debug: true, // Enables source maps
+	};
+	const opts = Object.assign({}, browserify.args, customOpts);
+	const b =  watch ? watchify(browserify(opts)) : browserify(opts);
 
 	return b.bundle()
 		.on('error', onError)
-		.pipe($.plumber({
-			errorHandler: onError
-		}))
-		.pipe(source('global.es6'))
+		.pipe($.plumber())
+		.pipe(source('app.es6'))
 		.pipe(buffer())
-		.pipe($.rename({
-			extname: '.js'
-		}))
 		.pipe($.sourcemaps.init({ loadMaps: true }))
-		.pipe($.sourcemaps.write(''))
-		.pipe(gulp.dest('tmp/js'))
-		.pipe(browserSync.stream({once: true}));
-});
-
-gulp.task('nunjucks', function () {
-	return gulp.src('app/nunjucks/**/[^_]*.html.nunjucks')
-		.pipe($.plumber({
-			errorHandler: onError
-		}))
-		.pipe($.nunjucksHtml({
-			searchPaths: ['app/nunjucks']
-		}))
-		.pipe($.rename({
-			extname: ''
-		}))
-		.pipe(gulp.dest('tmp'))
-		.pipe(browserSync.stream());
-});
-
-gulp.task('buildcss', ['scss'], function() {
-	return gulp
-		.src('tmp/css/*.css')
-		.pipe($.uglifycss())
-		.pipe(gulp.dest('dist/css'));
-});
-
-gulp.task('buildjs', ['es6'], function() {
-	return gulp
-		.src('tmp/js/*.js')
 		.pipe($.uglify())
-		.pipe(gulp.dest('dist/js'));
-});
-
-gulp.task('lintes6', function() {
-	return gulp
-		.src('app/es6/**/*.es6')
-		.pipe($.eslint({
-			extends: 'eslint:recommended',
-			env: {
-				"browser": true,
-				"commonjs": true,
-			},
-			parser: 'babel-eslint',
-			rules: {
-				'brace-style': [1, '1tbs'],
-				'camelcase': 1,
-				'comma-dangle': [1, 'always-multiline'],
-				'comma-spacing': [1, {'before': false, 'after': true}],
-				'comma-style': [2, 'last'],
-				'eol-last': 1,
-				'indent': [2, 'tab'],
-				'no-console': 0,
-				'quotes': [1, 'single'],
-				'semi': 2,
-				'strict': [2, 'global'],
-			},
+		.pipe($.rename({
+			extname: '.js',
 		}))
-		.pipe($.eslint.format('stylish', process.stderr))
-		.pipe($.eslint.results(function(results) {
-			if (results.warningCount || results.errorCount) {
-				$.util.beep();
-			}
-		}));
+		.pipe($.sourcemaps.write())
+		.pipe(gulp.dest('./tmp/js'))
+		.pipe(browserSync.stream({ once: true }));
+}
+
+gulp.task('js', ['cleanjs'], () => bundleJs());
+gulp.task('watchjs', ['cleanjs'], () => bundleJs(true));
+
+gulp.task('buildjs', ['js'], () =>
+	gulp
+		.src('./tmp/js/*.js')
+		.pipe($.uglify())
+		.pipe(gulp.dest('dist/js'))
+);
+
+/**
+ * Styles
+ */
+gulp.task('cleancss', del.bind(null, ['./tmp/css/**/*']));
+
+gulp.task('css', ['cleancss'], () =>
+	gulp
+		.src('./src/scss/**/*.scss')
+		.pipe($.plumber({
+			errorHandler: onError,
+		}))
+		.pipe($.sourcemaps.init())
+		.pipe($.sass({
+			outputStyle: 'compressed',
+			onError: console.error.bind(console, 'Sass error:'),
+		}))
+		.pipe($.autoprefixer())
+		.pipe($.sourcemaps.write(''))
+		.pipe(gulp.dest('tmp/css'))
+		.pipe(browserSync.stream())
+ );
+
+gulp.task('buildcss', ['css'], () =>
+	gulp
+		.src('./tmp/css/*.css')
+		.pipe($.uglifycss())
+		.pipe(gulp.dest('dist/css'))
+);
+
+
+/**
+ * Main
+ */
+gulp.task('dev', ['html', 'js', 'css']);
+gulp.task('build', ['buildhtml', 'buildjs', 'buildcss', 'buildmedia']);
+
+gulp.task('clean', del.bind(null, ['tmp', 'dist']));
+
+
+gulp.task('watch', ['dev', 'watchjs'], () => {
+	gulp.watch('./src/es6/**/*', ['js']);
+	gulp.watch('./src/scss/**/*', ['css']);
+	gulp.watch('./src/nunjucks/**/*', ['html']);
+	gulp.watch('./src/media/**/*').on('change', browserSync.reload);
 });
 
-gulp.task('buildhtml', ['nunjucks'], function() {
-	return gulp
-		.src('tmp/**/*.html')
-		.pipe(gulp.dest('dist'));
-});
 
-gulp.task('buildimages', function() {
-	return gulp
-		.src('app/image/**/*')
-		.pipe(gulp.dest('dist/image'));
-});
-
-gulp.task('build', ['buildcss', 'buildjs', 'buildhtml', 'buildimages']);
-
-gulp.task('cleancss', require('del').bind(null, ['tmp/css/*.css']));
-
-gulp.task('cleanjs', require('del').bind(null, ['tmp/js/*.js']));
-
-gulp.task('clean', require('del').bind(null, ['tmp', 'dist']));
-
-gulp.task('watch', ['scss', 'es6', 'nunjucks'], function() {
+gulp.task('serve', ['watch'], () =>
 	browserSync({
-		notify: false,
-		port: 9000,
 		server: {
-			baseDir: ['tmp', 'app'],
-			index: 'index.html',
+			baseDir: ['./tmp', './src'],
 		},
-	});
+	})
+);
 
-	gulp.watch('app/scss/**/*.scss', ['scss']);
-	gulp.watch('app/es6/**/*.es6', ['es6']);
-	gulp.watch('app/nunjucks/**/*.nunjucks', ['nunjucks']);
-});
+gulp.task('serve:dist', ['build'], () =>
+	browserSync({
+		server: {
+			baseDir: ['./dist'],
+		},
+	})
+);
 
-gulp.task('default', ['watch']);
+
+gulp.task('default', ['serve']);
