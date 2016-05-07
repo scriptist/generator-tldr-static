@@ -2,7 +2,7 @@
 <html>
 <head>
 
-	<title>{% block title %}Generator TLDR - Static{% endblock %}</title>
+	<title>Generator TLDR - Static</title>
 	<meta charset='utf-8' />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -13,22 +13,14 @@
 </head>
 <body>
 
-	<nav>
-		<ul>
-			<li><a href="/">Home</a></li>
-			<li><a href="/page-a">Page A</a></li>
-			<li><a href="/page-b">Page B</a></li>
-		</ul>
-	</nav>
-
 	<div class="content">
-		{% block content %}{% endblock %}
+		<h1>Home</h1>
+		<p>Hello!</p>
 	</div>
 
 
 	<!-- JavaScript -->
 	<script src="/js/app.js"></script>
-	{% block scripts %}{% endblock %}
 
 
 	<!-- Google Analytics -->

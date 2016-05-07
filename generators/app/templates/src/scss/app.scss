@@ -4,11 +4,12 @@
 @import "components";
 
 *, *::before, *::after {
-	box-sizing: border-box;
+	box-sizing: inherit;
 }
 
 :root {
 	background: white;
+	box-sizing: border-box;
 }
 
 body {

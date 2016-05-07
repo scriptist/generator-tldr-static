@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console,no-underscore-dangle,no-param-reassign */
 const watchify = require('watchify');
 const browserify = require('browserify');
 const gulp = require('gulp');
@@ -7,6 +7,12 @@ const buffer = require('vinyl-buffer');
 const browserSync = require('browser-sync');
 const del = require('del');
 const $ = require('gulp-load-plugins')();
+const fs = require('fs');<% if (includeNunjucks) { %>
+const path = require('path');
+const yamlFront = require('yaml-front-matter');
+const marked = require('marked');
+const nunjucks = require('nunjucks');
+const mkpath = require('mkpath');<% } %>
 
 
 function onError(err) {
@@ -36,26 +42,62 @@ gulp.task('buildmedia', () =>
  */
 gulp.task('cleanhtml', del.bind(null, ['tmp/**/*.html']));
 
-gulp.task('html', ['cleanhtml'], () =>
-	gulp.src('./src/nunjucks/**/[^_]*.html.nunjucks')
-		.pipe($.plumber({
-			errorHandler: onError,
-		}))
-		.pipe($.nunjucksHtml({
-			searchPaths: ['./src/nunjucks'],
-		}))
-		.pipe($.rename({
-			extname: '',
-		}))
-		.pipe(gulp.dest('tmp'))
-		.pipe(browserSync.stream())
+<% if (includeNunjucks) { %>
+gulp.task('html', ['cleanhtml'], () => {
+	const baseDataDir = './src/data';
+	const baseTemplateDir = './src/nunjucks';
+	const pageTypes = JSON.parse(fs.readFileSync('.pages.json'));
+	const pages = [];
+
+	pageTypes.forEach((pageType) => {
+		if (!pageType.dataDir) {
+			pages.push(pageType);
+		} else {
+			const dirContents = fs.readdirSync(`${baseDataDir}/${pageType.dataDir}`);
+			dirContents.forEach((dataFile) => {
+				const data = yamlFront.loadFront(`${baseDataDir}/${pageType.dataDir}/${dataFile}`);
+				data.__content = data.__content.trim();
+				data.slug = data.slug || dataFile.replace(/\..*/, '');
+				const url = pageType.url.replace(/:slug/g, data.slug);
+
+				if (dataFile.match(/\.md$/)) {
+					data.__content = marked(data.__content);
+				}
+
+				pages.push(Object.assign({}, pageType, {
+					url,
+					data,
+				}));
+			});
+		}
+	});
+
+	nunjucks.configure(baseTemplateDir);
+
+	pages.forEach((page) => {
+		const filename = `${page.url.replace(/\/$/, '/index').replace(/^\//, '')}.html`;
+		const filepath = `./tmp/${filename}`;
+		const output = nunjucks.render(`${page.template}.html.nunjucks`, page.data);
+		mkpath.sync(path.dirname(filepath));
+		fs.writeFileSync(filepath, output);
+	});
+
+	browserSync.reload();
+});
+<% } else { %>
+gulp.task('html', () =>
+	gulp
+		.src('./src/html/**/*.html')
+		.pipe(gulp.dest('./tmp'))
+		.pipe(browserSync.stream({ once: true }))
 );
+<% } %>
 
 gulp.task('buildhtml', ['html'], () =>
 	gulp
 		.src('./tmp/**/*.html')
 		.pipe($.htmlmin({ collapseWhitespace: true }))
-		.pipe(gulp.dest('dist'))
+		.pipe(gulp.dest('./dist'))
 );
 
 /**
@@ -94,7 +136,7 @@ gulp.task('buildjs', ['js'], () =>
 	gulp
 		.src('./tmp/js/*.js')
 		.pipe($.uglify())
-		.pipe(gulp.dest('dist/js'))
+		.pipe(gulp.dest('./dist/js'))
 );
 
 /**
@@ -115,7 +157,7 @@ gulp.task('css', ['cleancss'], () =>
 		}))
 		.pipe($.autoprefixer())
 		.pipe($.sourcemaps.write(''))
-		.pipe(gulp.dest('tmp/css'))
+		.pipe(gulp.dest('./tmp/css'))
 		.pipe(browserSync.stream())
  );
 
@@ -123,7 +165,7 @@ gulp.task('buildcss', ['css'], () =>
 	gulp
 		.src('./tmp/css/*.css')
 		.pipe($.uglifycss())
-		.pipe(gulp.dest('dist/css'))
+		.pipe(gulp.dest('./dist/css'))
 );
 
 
@@ -137,17 +179,36 @@ gulp.task('clean', del.bind(null, ['tmp', 'dist']));
 
 
 gulp.task('watch', ['dev', 'watchjs'], () => {
-	gulp.watch('./src/es6/**/*', ['js']);
-	gulp.watch('./src/scss/**/*', ['css']);
-	gulp.watch('./src/nunjucks/**/*', ['html']);
-	gulp.watch('./src/media/**/*').on('change', browserSync.reload);
+	gulp.watch('src/es6/**/*', ['js']);
+	gulp.watch('src/scss/**/*', ['css']);<% if (includeNunjucks) { %>
+	gulp.watch('src/nunjucks/**/*', ['html']);
+	gulp.watch('src/data/**/*', ['html']);
+	gulp.watch('.pages.json', ['html']);<% } else { %>
+	gulp.watch('src/html/**/*', ['html']);<% } %>
+	gulp.watch('src/media/**/*').on('change', browserSync.reload);
 });
 
+
+function appendHtml(dir, req, res, next) {
+	if (req.url.match(/\/[^.]+$/)) {
+		fs.access(`${dir}${req.url}.html`, fs.F_OK, (err) => {
+			if (!err) {
+				req.url += '.html';
+			}
+			next();
+		});
+	} else {
+		next();
+	}
+}
 
 gulp.task('serve', ['watch'], () =>
 	browserSync({
 		server: {
 			baseDir: ['./tmp', './src'],
+			middleware: [
+				appendHtml.bind(this, './tmp'),
+			],
 		},
 	})
 );
@@ -156,6 +217,9 @@ gulp.task('serve:dist', ['build'], () =>
 	browserSync({
 		server: {
 			baseDir: ['./dist'],
+			middleware: [
+				appendHtml.bind(this, './dist'),
+			],
 		},
 	})
 );

@@ -1,0 +1,11 @@
+[
+	{
+		"url": "/",
+		"template": "index"
+	},
+	{
+		"url": "/:slug",
+		"template": "page",
+		"dataDir": "page"
+	}
+]
