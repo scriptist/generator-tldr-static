@@ -52,7 +52,7 @@ module.exports = yeoman.generators.Base.extend({
 		} else {
 			ignore.push('*.nunjucks');
 			ignore.push('*.md');
-			ignore.push('.pages.json');
+			ignore.push('.templa.json');
 		}
 
 		recursive(sourceRoot, ignore, (err, files) => {

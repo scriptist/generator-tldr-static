@@ -16,8 +16,9 @@
 	<nav>
 		<ul>
 			<li><a href="/">Home</a></li>
-			<li><a href="/page-a">Page A</a></li>
-			<li><a href="/page-b">Page B</a></li>
+			{% for page in pages %}
+				<li><a href="/{{page.slug}}">{{page.title}}</a></li>
+			{% endfor %}
 		</ul>
 	</nav>
 

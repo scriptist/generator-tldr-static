@@ -1,0 +1,26 @@
+{
+	"baseDataDir": "./src/data",
+	"baseTemplateDir": "./src/nunjucks",
+	"templateExtension": "html.nunjucks",
+	"outputDir": "./tmp",
+	"globalData": [
+		{
+			"key": "pages",
+			"dir": "page"
+		}
+	],
+	"pages": [
+		{
+			"url": "/",
+			"template": "index"
+		},
+		{
+			"url": "/:slug",
+			"template": "page",
+			"data": {
+				"key": "page",
+				"dir": "page"
+			}
+		}
+	]
+}

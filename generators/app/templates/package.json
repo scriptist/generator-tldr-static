@@ -22,12 +22,9 @@
     "gulp-uglify": "^1.5.3",
     "gulp-uglifycss": "^1.0.6",
     "gulp-util": "^3.0.7",<% if (includeNunjucks) { %>
-    "marked": "^0.3.5",
-    "mkpath": "^1.0.0",
-    "nunjucks": "^2.4.2",<% } %>
+    "templa": "0.0.3",<% } %>
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
-    "watchify": "^3.7.0"<% if (includeNunjucks) { %>,
-    "yaml-front-matter": "^3.4.0"<% } %>
+    "watchify": "^3.7.0"
   }
 }

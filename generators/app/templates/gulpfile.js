@@ -8,11 +8,7 @@ const browserSync = require('browser-sync');
 const del = require('del');
 const $ = require('gulp-load-plugins')();
 const fs = require('fs');<% if (includeNunjucks) { %>
-const path = require('path');
-const yamlFront = require('yaml-front-matter');
-const marked = require('marked');
-const nunjucks = require('nunjucks');
-const mkpath = require('mkpath');<% } %>
+const templa = require('templa');<% } %>
 
 
 function onError(err) {
@@ -44,45 +40,9 @@ gulp.task('cleanhtml', del.bind(null, ['tmp/**/*.html']));
 
 <% if (includeNunjucks) { %>
 gulp.task('html', ['cleanhtml'], () => {
-	const baseDataDir = './src/data';
-	const baseTemplateDir = './src/nunjucks';
-	const pageTypes = JSON.parse(fs.readFileSync('.pages.json'));
-	const pages = [];
-
-	pageTypes.forEach((pageType) => {
-		if (!pageType.dataDir) {
-			pages.push(pageType);
-		} else {
-			const dirContents = fs.readdirSync(`${baseDataDir}/${pageType.dataDir}`);
-			dirContents.forEach((dataFile) => {
-				const data = yamlFront.loadFront(`${baseDataDir}/${pageType.dataDir}/${dataFile}`);
-				data.__content = data.__content.trim();
-				data.slug = data.slug || dataFile.replace(/\..*/, '');
-				const url = pageType.url.replace(/:slug/g, data.slug);
-
-				if (dataFile.match(/\.md$/)) {
-					data.__content = marked(data.__content);
-				}
-
-				pages.push(Object.assign({}, pageType, {
-					url,
-					data,
-				}));
-			});
-		}
+	templa(() => {
+		browserSync.reload();
 	});
-
-	nunjucks.configure(baseTemplateDir);
-
-	pages.forEach((page) => {
-		const filename = `${page.url.replace(/\/$/, '/index').replace(/^\//, '')}.html`;
-		const filepath = `./tmp/${filename}`;
-		const output = nunjucks.render(`${page.template}.html.nunjucks`, page.data);
-		mkpath.sync(path.dirname(filepath));
-		fs.writeFileSync(filepath, output);
-	});
-
-	browserSync.reload();
 });
 <% } else { %>
 gulp.task('html', () =>
