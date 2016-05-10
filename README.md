@@ -2,7 +2,7 @@
 
 ## Installation
 
-First, install [Yeoman](http://yeoman.io) and generator-tldr-static using [npm](https://www.npmjs.com/) (we assume you have pre-installed [node.js](https://nodejs.org/)).
+First, install [Yeoman](http://yeoman.io) and generator-tldr-static using [npm](https://www.npmjs.com/) (we assume you have pre-installed [node.js 6](https://nodejs.org/)).
 
 ```bash
 npm install -g yo
@@ -12,7 +12,7 @@ npm install -g generator-tldr-static
 Then generate your new project:
 
 ```bash
-yo generator-tldr-static
+yo tldr-static
 ```
 
 ## Getting To Know Yeoman
