@@ -143,7 +143,7 @@ gulp.task('watch', ['dev', 'watchjs'], () => {
 	gulp.watch('src/scss/**/*', ['css']);<% if (includeNunjucks) { %>
 	gulp.watch('src/nunjucks/**/*', ['html']);
 	gulp.watch('src/data/**/*', ['html']);
-	gulp.watch('.pages.json', ['html']);<% } else { %>
+	gulp.watch('.templa.json', ['html']);<% } else { %>
 	gulp.watch('src/html/**/*', ['html']);<% } %>
 	gulp.watch('src/media/**/*').on('change', browserSync.reload);
 });
